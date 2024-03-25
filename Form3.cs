@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Numerics;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.Xml;
@@ -11,140 +12,67 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Linq;
+using static System.Net.Mime.MediaTypeNames;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace NNGASU_TEST
 {
     public partial class Form3 : Form
     {
-
-        public int[,] variants = new int[4, 4];
-        int number1 = 0;
-        string[] tr = new string[4];
-        bool[] Que = new bool[] { true, true, true, true };
-        int count = 0;
-        float pos = 0;
-        string[] papka = new string[10];
-        int[] poradokForAns = new int[4];
-        
-        int countQue = 4;
+        static Logic take = new Logic();
         public Form3()
         {
             InitializeComponent();
-            TakePhoto takePhoto = new TakePhoto();
-            papka = takePhoto.Take();
+            take = new Logic();
+            
+            take.StartOfQue();
+            NewSlide();
             button7.Visible = false;
             button8.Visible = false;
             label3.Visible = false;
             pictureBox2.Visible = false;
-            Logic();
-            vopros();
         }
-
-        public void Logic()
+        private void NewSlide()
         {
-            for (int i = 0; i < 4; i++)
-            {
-                int[] arr = new int[10];
-                for (int j = 0; j < papka.Length; j++)
-                {
-                    arr[j] = j;
-                }
-                Random.Shared.Shuffle(arr);
-                for (int j = 0; j < 4; j++)
-                {
-                    variants[i, j] = arr[j];
-                }
-            }
-            
-            for (int j = 0; j < 4; j++)
-            {
-                poradokForAns[j] = j;
-            }
-            Random.Shared.Shuffle(poradokForAns);
-            for (int i = 0;i<4;i++)
-            {
-                int x = variants[i, i];
-                for (int j =0 ; j < 4; j++)
-                {
-                    if (x == variants[j,j] && variants[i, j]!= variants[j, j])
-                    {
-                        Logic(); return;
-                    }
-                }
-            }
+            label1.Text = take.number + 1 + "/4";
+            pictureBox1.Image = take.MyImage;
+            button1.Text = take.papka[take.variants[take.number, take.poradokForAns[2]]];
+            button4.Text = take.papka[take.variants[take.number, take.poradokForAns[1]]];
+            button5.Text = take.papka[take.variants[take.number, take.poradokForAns[0]]];
+            button6.Text = take.papka[take.variants[take.number, take.poradokForAns[3]]];
         }
-        public void vopros()
-        {
-            label1.Text = number1 + 1 + "/4";
-            string name = papka[variants[number1, number1]];
-            Bitmap MyImage;
-            MyImage = new Bitmap("C:\\Users\\ванек\\Desktop\\LABTESTNEW\\" + name + ".jpg");
-            pictureBox1.Image = (Image)MyImage;
-            for (int i = 0; i < tr.Length;i++)
-            {
-                if (i == number1)
-                {
-                    tr[i] = name;
-                    if (Que[i] != false)
-                    {
-                        Que[i] = true;
-                    }
-                    
-                }
-            }
-            button1.Text = papka[variants[number1, poradokForAns[2]]];
-            button4.Text = papka[variants[number1, poradokForAns[1]]];
-            button5.Text = papka[variants[number1, poradokForAns[0]]];
-            button6.Text = papka[variants[number1, poradokForAns[3]]];
-        }
-
         private void button2_Click(object sender, EventArgs e)
         {
-
-            if (number1 != 4 - 1)
-            {
-                number1++;
+            if (take.number != 4 - 1)
+            { 
+                take.number++;               
+                take.voprosForQue(take.number);
                 pereh();
-                vopros();
-
+                NewSlide();
             }
-            if (number1 == 4 - 1)
+            if (take.number == 4 - 1)
             {
-
                 button7.Visible = true;
             }
             else
             {
                 button7.Visible = false;
             }
-
         }
-
         private void button3_Click(object sender, EventArgs e)
         {
-            if (number1 != 0)
+            if (take.number != 0)
             {
-                number1--;
+                take.number--;
+                take.voprosForQue(take.number);
                 pereh();
-                vopros();
+                NewSlide();
             }
-
             button7.Visible = false;
-
-
         }
         public void pereh()
         {
-            bool kak = true;
-            
-            for (int i = 0; i < tr.Length; i++)
-            {
-                if (i == number1)
-                {
-                    kak = Que[i];
-                }
-            }
+            bool kak = take.per();            
             if (!kak)
             {
                 BlockBut();
@@ -174,35 +102,23 @@ namespace NNGASU_TEST
         }
         public void voite(Button button)
         {
-            string real = "";
-            pos++;
-            label4.Text = Convert.ToString((pos / countQue) * 100) + "%";
-            for (int i = 0; i < tr.Length; i++)
-            {
-                if (i == number1)
-                {
-                    real = tr[i]; Que[i] = false; 
-                }
-            }
+            take.pos++;
+            label4.Text = Convert.ToString((take.pos / take.countQue) * 100) + "%";
+            string real = take.RealOrNot();
             if (button.Text == real)
             {
                 button.BackColor = Color.Green;
-                count++;
-                
+                take.count++;
             }
             else
             {
                 button.BackColor = Color.Red;
             }
             BlockBut();
-
-
         }
         private void button1_Click(object sender, EventArgs e)
         {
-
             voite(button1);
-
         }
 
         private void button5_Click(object sender, EventArgs e)
@@ -235,11 +151,11 @@ namespace NNGASU_TEST
             label2.Visible = false;
             label3.Visible = true;
             label4.Visible = false;
-            label3.Text = "Ваш результат: " + count + "/4";
+            label3.Text = "Ваш результат: " + take.count + "/4";
             pictureBox2.Visible = true;
             Bitmap MyImage;
             MyImage = new Bitmap("C:\\Users\\ванек\\Desktop\\LABTESTNEW\\дед инсульт.jpg");
-            pictureBox2.Image = (Image)MyImage;
+            pictureBox2.Image = MyImage;
         }
 
         private void button8_Click(object sender, EventArgs e)

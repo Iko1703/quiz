@@ -8,43 +8,27 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace NNGASU_TEST
 {
     
     public partial class Form2 : Form
     {
-        int[] poradok = new int[10];
-        string [] papka = new string[10];
-        int number1 = 0;
-
+        static Logic take = new Logic();
         public Form2()
         {
             InitializeComponent();
-            TakePhoto take = new TakePhoto();
-            papka = take.Take();
-            Logic();
-            
+            take = new Logic();
+            take.Start();
+            take.vopros(take.poradok[take.number]);
+            NewSlide();
         }
-        
-        public void Logic()
+        private void NewSlide()
         {
-            for (int i = 0; i < poradok.Length; i++)
-            {
-                poradok[i] = i;
-            }
-            Random.Shared.Shuffle(poradok);
-            
-            vopros(poradok[number1]);
-        }
-        public void vopros(int num)
-        {
-            label2.Text = number1+1 + "/10";
-            string name = Convert.ToString(papka[num]);
-            Bitmap MyImage;
-            MyImage = new Bitmap("C:\\Users\\ванек\\Desktop\\LABTESTNEW\\" + name + ".jpg");
-            pictureBox1.Image = (Image)MyImage;
-            label1.Text = name;
+            label2.Text = take.number + 1 +  $"/{take.papka.Length}";
+            pictureBox1.Image = (Image)take.MyImage;
+            label1.Text = take.nowName;
         }
         private void button1_Click(object sender, EventArgs e)
         {
@@ -52,41 +36,22 @@ namespace NNGASU_TEST
         }
         private void button2_Click(object sender, EventArgs e)
         {
-            if (number1 != poradok.Length - 1)
+            if (take.NextSlide(take.number))
             {
-                number1++;
-                
-                vopros(poradok[number1]);
-
+                NewSlide();
             }
             else
             {
                 this.Close();
             }
         }
-
         private void button3_Click(object sender, EventArgs e)
         {
-            if (number1 != 0)
+            if (take.FirstSlide(take.number))
             {
-                number1--;
-                vopros(poradok[number1]);
-
+                NewSlide();
             }
         }
     }
-    public class TakePhoto()
-    {
-        string[] papka = new string[10];
-        public string[] Take()
-        {
-            var dir = new DirectoryInfo("C:\\Users\\ванек\\Desktop\\LABTESTNEW");
-            int cells = 0;
-            foreach (FileInfo file in dir.GetFiles())
-            {
-                papka[cells++] = Path.GetFileNameWithoutExtension(file.FullName);
-            }
-            return papka;
-        }
-    }
+    
 }
